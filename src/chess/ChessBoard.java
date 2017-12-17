@@ -29,6 +29,15 @@ public class ChessBoard {
         board[x][y] = color;
     }
 
+    /* 清空棋盘棋子 */
+    public void clear() {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                board[i][j] = EMPTY;
+            }
+        }
+    }
+
     /* 撤子 */
     public void unMove(int x, int y) {
         board[x][y] = EMPTY;
