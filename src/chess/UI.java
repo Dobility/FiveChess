@@ -104,7 +104,7 @@ public class UI {
         Object[] possibilities = {"再来一次", "退出游戏"};
         int n = JOptionPane.showOptionDialog(
                 null,
-                "机器胜利",
+                alert,
                 "Game Over",
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE,
