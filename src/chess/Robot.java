@@ -17,12 +17,14 @@ public class Robot {
         return robot;
     }
 
-    /* alpha_beta剪枝搜索 */
-    public int alpha_betaFind(int depth, int alpha, int beta, int color, int prex, int prey) {
+    /**
+     * alpha_beta剪枝搜索
+     */
+    public int alpha_betaFind(int depth, int alpha, int beta, int self, int color, int prex, int prey) {
 
         if(depth >= Robot.depth || 0 != chess.isEnd(prex, prey, color%2+1)) {
 
-            int ans = chess.reckon(robotColor) - chess.reckon(robotColor%2 + 1);
+            int ans = chess.reckon(self) - chess.reckon(self%2 + 1);
 
             if(depth % 2 == 0)
                 ans = -ans;
@@ -37,7 +39,7 @@ public class Robot {
                     continue;
 
                 chess.makeMove(x, y, color);
-                int val = -alpha_betaFind(depth+1, -beta, -alpha, color%2+1, x, y);
+                int val = -alpha_betaFind(depth+1, -beta, -alpha, self,color%2+1, x, y);
 
                 chess.unMove(x, y);
 
@@ -66,7 +68,7 @@ public class Robot {
 
                 chess.makeMove(x, y, color);
 
-                int val = -alpha_betaFind(0, -100000000, 100000000, color%2 + 1, x, y);
+                int val = -alpha_betaFind(0, -100000000, 100000000, color,color%2 + 1, x, y);
 
                 int ra = random.nextInt(100);
                 if(val > ans || val == ans && ra >= 50) {

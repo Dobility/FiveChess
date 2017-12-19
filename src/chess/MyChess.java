@@ -13,6 +13,7 @@ class MyChess extends Canvas {
     private final int stx = square;
     private final int sty = square;
     private final int length = (N-1)*square;
+    public Graphics graphics;
 
     public void drawPiece(int color, int x, int y, Graphics g) {
         if (color == chess.BLACK) {
@@ -54,5 +55,6 @@ class MyChess extends Canvas {
                 drawPiece(chess.board[i][j], i, j, g);
             }
         }
+        graphics = g;
     }
 }

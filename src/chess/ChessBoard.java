@@ -31,8 +31,8 @@ public class ChessBoard {
 
     /* 清空棋盘棋子 */
     public void clear() {
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
+        for (int i = 0; i <= N; i++) {
+            for (int j = 0; j <= N; j++) {
                 board[i][j] = EMPTY;
             }
         }
@@ -43,6 +43,7 @@ public class ChessBoard {
         board[x][y] = EMPTY;
     }
 
+    /* 评估 */
     public int reckon(int color) {
 
         int dx[] = {1, 0, 1, 1};
@@ -170,5 +171,17 @@ public class ChessBoard {
                 return color;
         }
         return 0;
+    }
+
+    /* 判断是否平局（即棋盘已经下满还没分出胜负） */
+    public boolean isDead() {
+        for (int i = 1; i <= N; i++) {
+            for (int j = 1; j <= N; j++) {
+                if (board[i][j] == EMPTY) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
