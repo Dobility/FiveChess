@@ -4,6 +4,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
 
 /**
@@ -11,50 +15,44 @@ import java.util.Random;
  */
 public class UIRobot {
     private ChessBoard chess = ChessBoard.getInstance();
-    private int userColor = chess.WHITE;
-    private int robotColor = chess.BLACK;
     private MyChess drawArea = new MyChess();
-    private boolean showUI = false;
-    private boolean showStep = false;
+
+    private boolean showUI = false;         // 是否显示窗口
+    private boolean showStep = false;       // 是否在console显示步骤
+    private boolean writeFile = false;      // 是否写入文件
+    private boolean autoAlter = true;       // 先行者是否来回切换
+    private boolean randomFirst = false;    // 第一步是否任意位置
 
     private Robot r1 = Robot.getRobot();
     private Robot r2 = Robot.getRobot();
 
-    private int firstX = chess.N / 2 + 1;
-    private int firstY = chess.N / 2 + 1;
     private Random random = new Random();
-//    private int firstX = random.nextInt(chess.N - 1) + 1;
-//    private int firstY = random.nextInt(chess.N - 1) + 1;
+    private int firstX = random.nextInt(chess.N - 1) + 1;
+    private int firstY = random.nextInt(chess.N - 1) + 1;
 
     // r1先走
-//    private Robot firstRobot = r1;
-//    private Robot secondRobot = r2;
-//    private int firstColor = robotColor;
-//    private int secondColor = userColor;
-//    private String firstName = "r1";
-//    private String secondName = "r2";
-    // r2先走
-    private Robot firstRobot = r2;
-    private Robot secondRobot = r1;
-    private int firstColor = userColor;
-    private int secondColor = robotColor;
-    private String firstName = "r2";
-    private String secondName = "r1";
+    private int first = 1;
+    private int second = first % 2 + 1;
+    private Robot firstRobot = r1;
+    private Robot secondRobot = r2;
 
-    private int firstWin = 0;
-    private int secondWin = 0;
+    private int r1Win = 0;
+    private int r2Win = 0;
 
-    private int times = 1001;
+    private FileWriter fw;
+    private SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
 
+    private int times = 100;                // 循环次数
+    private int center = chess.N / 2 + 1;
+
+    // 初始化
     public void init() {
         Panel p = new Panel();
-        System.out.println(firstName + "先行：(" + firstX + ", " + firstY + ")");
-        chess.makeMove(firstX, firstY, firstColor);
-        Console_showStep(firstName, firstX, firstY);
         UI_showFrame();
-        play();
+        start();
     }
 
+    // 显示窗口
     public void UI_showFrame() {
         if (showUI) {
             JFrame frame = new JFrame("机器五子棋对弈");
@@ -67,41 +65,75 @@ public class UIRobot {
         }
     }
 
+    // 重绘棋盘棋子
     public void UI_repaint() {
         if (showUI) {
             drawArea.repaint();
         }
     }
 
+    // 在console显示步骤
     public void Console_showStep(String name, int x, int y) {
         if (showStep) {
             System.out.println(name + ": (" + x + ", " + y + ")");
         }
+        writeChessFile(name + "\t" + x + "\t" + y);
     }
 
+    // 创建棋谱文件
+    public void createChessFile() {
+        if (writeFile) {
+            try {
+                fw = new FileWriter("chess/chess" + df.format(new Date()) + ".txt", true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // 将下的每一步写入文件
+    public void writeChessFile(String s) {
+        if (writeFile) {
+            try {
+                fw.write(s + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // 下棋过程
     public void play() {
         while (true) {
             // 第二个下的机器
-            int rob[] = secondRobot.getNext(secondColor);
-            chess.makeMove(rob[0], rob[1], secondColor);
-            Console_showStep(secondName, rob[0], rob[1]);
+            int rob[] = secondRobot.getNext(chess.WHITE);
+            chess.makeMove(rob[0], rob[1], chess.WHITE);
+            Console_showStep("r" + second, rob[0], rob[1]);
             UI_repaint();
-            int rel = chess.isEnd(rob[0], rob[1], secondColor);
+            int rel = chess.isEnd(rob[0], rob[1], chess.WHITE);
             if (rel != 0) {
-                secondWin++;
-                restart(secondName + "胜利");
+                if (first == 1) {
+                    r2Win++;
+                } else {
+                    r1Win++;
+                }
+                restart("r" + second + "胜利");
                 return;
             }
 
             // 第一个下的机器
-            rob = firstRobot.getNext(firstColor);
-            chess.makeMove(rob[0], rob[1], firstColor);
-            Console_showStep(firstName, rob[0], rob[1]);
+            rob = firstRobot.getNext(chess.BLACK);
+            chess.makeMove(rob[0], rob[1], chess.BLACK);
+            Console_showStep("r" + first, rob[0], rob[1]);
             UI_repaint();
-            rel = chess.isEnd(rob[0], rob[1], firstColor);
+            rel = chess.isEnd(rob[0], rob[1], chess.BLACK);
             if (rel != 0) {
-                firstWin++;
-                restart(firstName + "胜利");
+                if (first == 1) {
+                    r1Win++;
+                } else {
+                    r2Win++;
+                }
+                restart("r" + first + "胜利");
                 return;
             }
 
@@ -113,8 +145,28 @@ public class UIRobot {
         }
     }
 
+    // 开始游戏
+    public void start() {
+        if (randomFirst) {
+            firstX = random.nextInt(chess.N - 1) + 1;
+            firstY = random.nextInt(chess.N - 1) + 1;
+        } else {
+            firstX = center;
+            firstY = center;
+        }
+        chess.makeMove(firstX, firstY, chess.BLACK);
+        System.out.println("r" + first + "先行：(" + firstX + ", " + firstY + ")");
+        createChessFile();
+        writeChessFile("r" + first);
+        Console_showStep("r" + first, firstX, firstY);
+        UI_repaint();
+        play();
+    }
+
+    // 重新开始游戏
     public void restart(String alert) {
-        System.out.println(alert + ", " + firstName + ":" + secondName + " = " + firstWin + ":" + secondWin + "\n");
+        System.out.println(alert + ", r1:r2 = " + r1Win +  ":" + r2Win + "\n");
+        writeChessFile(alert);
         int n = 1;
         if (showUI) {
             Object[] possibilities = {"再来一次", "退出游戏"};
@@ -136,13 +188,25 @@ public class UIRobot {
         } else {
             chess.clear();
             UI_repaint();
-//            firstX = random.nextInt(chess.N - 1) + 1;
-//            firstY = random.nextInt(chess.N - 1) + 1;
-            chess.makeMove(firstX, firstY, firstColor);
-            System.out.println(firstName + "先行：(" + firstX + ", " + firstY + ")");
-            Console_showStep(firstName, firstX, firstY);
-            UI_repaint();
-            play();
+            try {
+                if (writeFile) {
+                    fw.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (autoAlter) {
+                first = first % 2 + 1;
+                second = first % 2 + 1;
+                if (first == 1) {
+                    firstRobot = r1;
+                    secondRobot = r2;
+                } else {
+                    firstRobot = r2;
+                    secondRobot = r1;
+                }
+            }
+            start();
         }
     }
 
